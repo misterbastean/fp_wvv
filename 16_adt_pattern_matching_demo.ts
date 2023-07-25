@@ -95,23 +95,30 @@ const right = <A, E = never>(a: A): Either<E, A> => ({
   right: a,
 });
 
+// This type of function allows us to run a callback depending on if the path is right or left
+// i.e. happy path or unhappy path
 type MatchEither = <E, A, B>(
   onLeft: (e: E) => B,
   onRight: (a: A) => B
 ) => (x: Either<E, A>) => B;
 
+// Helper function to determine which path is taken
 const isLeft = <E, A>(x: Either<E, A>): x is Left<E> => x._tag === "Left";
 
+// Now we create our function (which returns a function)
 const matchEither: MatchEither = (onLeft, onRight) => (x) =>
   isLeft(x) ? onLeft(x.left) : onRight(x.right);
 
+// We're not sure if this will have a value or not, like a REST API call, etc.
+// It could be a number (happy path = right) or it could be an error (unhappy path = left)
 const errorOrNum: Either<string, number> = right(12);
 const resultEither1 = matchEither(
-  (e: string) => `Error happened: ${e}`,
-  (a: number) => `num is ${a}`
-)(errorOrNum);
+  (e: string) => `Error happened: ${e}`, // onLeft, so callback if unhappy path
+  (a: number) => `num is ${a}` // onRight, so callback if happy path
+)(errorOrNum); // Curried function, so we call it twice, once with callbacks, once with value
 console.log(resultEither1);
 
+// Still don't know if it's a number or error. This time, we're simulating an error.
 const errorOrNum2: Either<string, number> = left("Well, crap, it broke.");
 
 const resultEither2 = matchEither(
